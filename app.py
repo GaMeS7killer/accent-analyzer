@@ -1,11 +1,12 @@
 import streamlit as st
 import requests
-from moviepy.editor import VideoFileClip
+from pydub import AudioSegment
+import subprocess
 from deepgram import Deepgram
 import asyncio
 import os
 
-# ====== SET YOUR DEEPGRAM API KEY HERE =======
+# ====== READ DEEPGRAM API KEY FROM ENVIRONMENT =======
 DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
 
 # Function to download video
@@ -18,10 +19,18 @@ def download_video(video_url, output_path):
     else:
         raise Exception("Failed to download video")
 
-# Function to extract audio from video
+# Function to extract audio from video using ffmpeg (Streamlit Cloud compatible)
 def extract_audio(video_path, audio_path):
-    clip = VideoFileClip(video_path)
-    clip.audio.write_audiofile(audio_path, codec='pcm_s16le')  # WAV format
+    command = [
+        'ffmpeg',
+        '-i', video_path,
+        '-vn',
+        '-acodec', 'pcm_s16le',
+        '-ar', '16000',
+        '-ac', '1',
+        audio_path
+    ]
+    subprocess.run(command, check=True)
 
 # Async function to call Deepgram API
 async def transcribe_with_deepgram(audio_file):
