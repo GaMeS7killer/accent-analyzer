@@ -1,6 +1,5 @@
 import streamlit as st
 import requests
-from pydub import AudioSegment
 import subprocess
 from deepgram import Deepgram
 import asyncio
@@ -19,7 +18,7 @@ def download_video(video_url, output_path):
     else:
         raise Exception("Failed to download video")
 
-# Function to extract audio from video using ffmpeg (Streamlit Cloud compatible)
+# Function to extract audio using ffmpeg directly
 def extract_audio(video_path, audio_path):
     command = [
         'ffmpeg',
