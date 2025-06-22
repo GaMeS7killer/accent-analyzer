@@ -7,9 +7,10 @@ import os
 # ====== READ DEEPGRAM API KEY FROM ENVIRONMENT =======
 DEEPGRAM_API_KEY = os.getenv("DEEPGRAM_API_KEY")
 
-# Function to download video
+# Function to download video with proper headers
 def download_video(video_url, output_path):
-    response = requests.get(video_url, stream=True)
+    headers = {'User-Agent': 'Mozilla/5.0'}  # VERY IMPORTANT FIX
+    response = requests.get(video_url, stream=True, headers=headers)
     if response.status_code == 200:
         with open(output_path, 'wb') as f:
             for chunk in response.iter_content(1024):
@@ -42,16 +43,20 @@ if st.button("Analyze Accent"):
             st.info("Sending video to Deepgram for analysis...")
             response = asyncio.run(transcribe_with_deepgram('video.mp4'))
 
-            transcript = response['results']['channels'][0]['alternatives'][0]['transcript']
-            language = response['results'].get('language', 'Unknown')
-            confidence = response['results']['channels'][0]['alternatives'][0].get('confidence', 0)
+            # Check if we got valid results before accessing
+            channels = response['results'].get('channels', [])
+            if channels and channels[0]['alternatives']:
+                transcript = channels[0]['alternatives'][0]['transcript']
+                confidence = channels[0]['alternatives'][0].get('confidence', 0)
+                language = response['results'].get('language', 'Unknown')
 
-            st.success("✅ Analysis Completed!")
-            st.write(f"**Transcript:** {transcript}")
-            st.write(f"**Detected Language:** {language}")
-            st.write(f"**Confidence:** {round(confidence * 100, 2)} %")
+                st.success("✅ Analysis Completed!")
+                st.write(f"**Transcript:** {transcript}")
+                st.write(f"**Detected Language:** {language}")
+                st.write(f"**Confidence:** {round(confidence * 100, 2)} %")
+            else:
+                st.warning("No speech detected in the video.")
 
-            # Cleanup file
             os.remove('video.mp4')
 
         except Exception as e:
